@@ -9,6 +9,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
+    uart_write_word(90);
     loop {}
 }
 
@@ -24,32 +25,43 @@ unsafe fn main() -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let _peripherals = esp_hal::init(config);
 
-    let trap_handle_addr: usize = trap_handle as usize;
+    // set mstatus so that mret 'returns' to user mode - bits 12-11 determine the privilege level
+    // to return to (0b00 for U which we want, 0b01 for S but we don't care about that, 0b11 for M)
+    // TODO: that
+
+    // set the trap vector to point to syscall_handle()
+    let syscall_handle_addr = syscall_handle as usize;
+    asm!("csrw mtvec, {0}", in(reg) syscall_handle_addr);
+
+    // set the return address (ie the 'entry point' for the user-mode code) to be trap_handle
+    let trap_handle_addr = trap_handle as usize;
     asm!("csrw mepc, {0}", in(reg) trap_handle_addr);
+    // switch to user mode and jump to trap_handle()
     asm!("mret");
     uart_write_word(69);
     uart_write_word(76);
     uart_write_word(76);
     uart_write_word(79);
 
-    let test = 1234;
-    let test_ptr: *const i32 = &test;
-    let mut test_addr: usize = test_ptr as usize;
-    loop {
-        uart_write_word(test_addr % 10 + 48);
-        test_addr /= 10;
-        if test_addr == 0 { break; }
-    }
-
     loop {}
 }
 
-unsafe fn trap_handle() -> ! {
+#[no_mangle]
+extern "C" fn syscall_handle() {
+    uart_write_word(65);
+    loop {}
+}
+
+#[no_mangle]
+unsafe extern "C" fn trap_handle() -> ! {
     uart_write_word(80);
     uart_write_word(80);
     uart_write_word(80);
     uart_write_word(80);
     uart_write_word(80);
     uart_write_word(80);
+    //asm!("li a7, 0");
+    asm!("ecall");
+    uart_write_word(81);
     loop {}
 }

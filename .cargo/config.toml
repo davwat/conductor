@@ -8,6 +8,7 @@ rustflags = [
   # Required to obtain backtraces (e.g. when using the "esp-backtrace" crate.)
   # NOTE: May negatively impact performance of produced code
   "-C", "force-frame-pointers",
+  "-C", "llvm-args=-align-all-functions=2" # align all functions to multiple of 2^2=4 bytes, required for mtvec etc
 ]
 
 target = "riscv32imac-unknown-none-elf"
