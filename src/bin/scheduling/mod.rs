@@ -11,8 +11,8 @@ pub struct Process {
     pub id: u16, // init has id of 1
 
     pub parent: Option<Box<Process>>, // every process except init should have a parent.
-                                         // dangling processes get given to init.
-                                         // init must not have a parent.
+                                      // dangling processes get given to init.
+                                      // init must not have a parent.
     // TODO: children
 
     pub entry_addr: usize,
@@ -22,13 +22,17 @@ pub fn spawn_init() -> Box<Process> {
     return Box::new(Process {
         id: 1,
         parent: None,
-        entry_addr: init_test as usize,
+        entry_addr: 6,// init_test as usize,
     });
 }
 
 #[no_mangle]
-fn init_test() {
+extern "C" fn init_test() -> ! {
     uart::write_chars(['I', 'n', 'i', 't', '\n'].into_iter());
+    unsafe {
+        asm!("ecall");
+    }
+    panic!();
 }
 
 pub fn context_switch(process: &Process) {
@@ -38,15 +42,16 @@ pub fn context_switch(process: &Process) {
         // TODO: that
 
         // set the trap vector to point to syscall_handle()
-        let syscall_handle_addr = syscall_handle as usize;
-        asm!("csrw mtvec, {0}", in(reg) syscall_handle_addr);
+        //let syscall_handle_addr = syscall_handle as usize;
+        //asm!("csrw mtvec, {0}", in(reg) syscall_handle_addr);
 
         // set the return address (ie the 'entry point' for the user-mode code) to be trap_handle
         //let trap_handle_addr = trap_handle as usize;
-        let trap_handle_addr = process.entry_addr as usize;
-        asm!("csrw mepc, {0}", in(reg) trap_handle_addr);
-        // switch to user mode and jump to trap_handle()
-        asm!("mret");
+        asm!(
+            "csrw mepc, {0}",
+            "mret", // switch to user mode and jump to trap_handle()
+            in(reg) process.entry_addr
+        );
         uart::write_word(69);
         uart::write_word(76);
         uart::write_word(76);

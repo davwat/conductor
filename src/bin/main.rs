@@ -22,6 +22,9 @@ unsafe fn main() -> ! {
     let _peripherals = esp_hal::init(config);
 
     let init = scheduling::spawn_init();
+    uart::write_word((init.id + 65) as usize);
+    uart::write_word((init.entry_addr + 66) as usize);
+    scheduling::context_switch(&*init);
 
     loop {}
 }
