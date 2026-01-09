@@ -18,9 +18,11 @@ impl KernelAllocator {
     }
 }
 
+use crate::drivers::uart;
 unsafe impl GlobalAlloc for KernelAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        self.heap.head_free.block_free_start_addr() as *mut u8
+        uart::write_word(67);
+        return self.heap.head_free.block_free_start_addr() as *mut u8;
     }
 
     unsafe fn dealloc(&self, pointer: *mut u8, layout: Layout) {
@@ -45,7 +47,7 @@ impl Heap {
 }
 
 // linked list of freeblocks makes up heap
-struct FreeBlock {
+pub struct FreeBlock {
     size: usize,
     next: Option<&'static mut FreeBlock>,
 }

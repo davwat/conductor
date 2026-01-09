@@ -1,6 +1,5 @@
 use core::arch::asm;
-
-const UART_ADDR: usize = 0x6000_0000_usize;
+use super::platform::UART_ADDR;
 
 pub fn write_word(word: usize) {
     unsafe {

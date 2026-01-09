@@ -1,7 +1,6 @@
 use core::arch::asm;
 extern crate alloc;
 use alloc::boxed::Box;
-use crate::drivers::uart;
 
 // conductor's 'process control block'
 // processes should live on the heap and exactly one instance of Process should exist per process
@@ -22,10 +21,11 @@ pub fn spawn_init() -> Box<Process> {
     return Box::new(Process {
         id: 1,
         parent: None,
-        entry_addr: 6,// init_test as usize,
+        entry_addr: init_test as usize,
     });
 }
 
+use crate::drivers::uart;
 #[no_mangle]
 extern "C" fn init_test() -> ! {
     uart::write_chars(['I', 'n', 'i', 't', '\n'].into_iter());
