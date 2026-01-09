@@ -1,5 +1,3 @@
-// kernel heap allocator
-
 extern crate alloc;
 use alloc::alloc::{GlobalAlloc, Layout};
 
